@@ -104,10 +104,19 @@ class IRCServer(QTcpSocket):
 		
 		return None, None, None, "(unknown msg)"
 	
-	def channel(self, name):
-		return self.__channels[name]
+	def channel(self, channel):
+		"""
+		Returns the channel \a channel.
+		"""
+		return self.__channels[channel]
 	
 	def connectAs(self, nick, user="", host="", serverName="", realName=""):
+		"""
+		Opens a connection to the server and instantly returns.
+		If the connection is successful, the user's nickname will automatically be
+		set to \a nick. \a user, \a host, \a serverName and \a realName al default
+		to the user's nickname.
+		"""
 		self.connectToHost(self.__host, self.__port)
 		self.__nick = nick
 		
@@ -118,20 +127,37 @@ class IRCServer(QTcpSocket):
 		self.connected.connect(onConnect)
 	
 	def join(self, channel):
+		"""
+		Joins the channel \a channel.
+		"""
 		self.write("JOIN %s\r\n" % (channel))
 	
 	def nick(self):
+		"""
+		Returns the user's nickname.
+		"""
 		return self.__nick
 	
 	def pong(self, msg):
+		"""
+		Sends a PONG packet to the server with the message \a msg.
+		\sa receivedPing()
+		"""
 		msg = str(msg) # XXX
 		self.write("PONG %s\r\n" % (msg))
 	
 	def quit(self):
+		"""
+		Quits the server and closes the TCP socket.
+		"""
 		self.write("QUIT\r\n")
 		self.close()
 	
 	def write(self, data):
+		"""
+		Writes \a data to the server. The data is not modified, and must be properly
+		terminated with CRLF.
+		"""
 		print(">>> %r" % (data))
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
@@ -150,18 +176,34 @@ class IRCChannel(QObject):
 		super(IRCChannel, self).__init__(parent)
 		self.__name = name
 		self.__parent = parent # server
+		self.__topic = ""
 		self.receivedTopic.connect(lambda topic: self.__topic = topic)
 	
 	def name(self):
+		"""
+		Returns the channel name.
+		"""
 		return self.__name
 	
 	def parent(self):
+		"""
+		Returns the IRCServer the channel lives on.
+		"""
 		return self.__parent
 	
 	def topic(self):
+		"""
+		Returns the topic for  the channel.
+		If no topic has been set, or the channel topic has not been received yet,
+		returns an empty string.
+		\sa receivedTopic()
+		"""
 		return self.__topic
 	
 	def write(self, msg):
+		"""
+		Sends a message to the channel.
+		"""
 		self.parent().write("PRIVMSG %s :%s" % (self.name(), msg))
 
 
@@ -171,16 +213,25 @@ class IRCUser(object):
 		self.__parent = parent # server
 	
 	def name(self):
+		"""
+		Alias for nick()
+		"""
 		return self.__name
 	
 	def nick(self):
 		"""
-		Alias for name()
+		Returns the user's nickname.
 		"""
 		return self.__name
 	
 	def parent(self):
+		"""
+		Returns the IRCServer the user lives on.
+		"""
 		return self.__parent
 	
 	def write(self, msg):
+		"""
+		Sends a message to the user.
+		"""
 		self.parent().write("PRIVMSG %s :%s" % (self.name(), msg))
