@@ -2,7 +2,7 @@
 Python IRC library
 """
 
-from PySide.QtCore import Signal, SIGNAL
+from PySide.QtCore import QObject, Signal, SIGNAL
 from PySide.QtNetwork import QTcpSocket
 
 
@@ -131,7 +131,7 @@ class IRCServer(QTcpSocket):
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
 
-class IRCChannel(object):
+class IRCChannel(QObject):
 	"""
 	A channel on an IRC server
 	This should not be created outside an IRCServer object.
@@ -140,6 +140,7 @@ class IRCChannel(object):
 	userJoined = Signal(str) # Fired when an user joins the channel
 	
 	def __init__(self, name, parent):
+		super(IRCChannel, self).__init__(parent)
 		self.__name = name
 		self.__parent = parent # server
 	
