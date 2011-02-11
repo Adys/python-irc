@@ -14,6 +14,7 @@ def stripcolon(s):
 
 # OpCodes
 RPL_WELCOME = 001
+RPL_TOPIC   = 332
 
 class IRCServer(QTcpSocket):
 	"""
@@ -57,6 +58,10 @@ class IRCServer(QTcpSocket):
 			if opcode == RPL_WELCOME:
 				self.online.emit()
 			
+			if opcode == RPL_TOPIC:
+				channel, _, msg = msg.partition(" ")
+				self.channel(channel).receivedTopic.emit(msg)
+			
 			elif opcode == "JOIN":
 				nick, host = sender.split("!")
 				channel = stripcolon(recipient)
@@ -84,12 +89,12 @@ class IRCServer(QTcpSocket):
 	
 	def __parse(self, line):
 		if line.startswith(":"):
-			sender, opcode, recipient = line.split(" ")[:3]
+			sender, opcode, recipient = line[1:].split(" ")[:3] # strip the first colon already
 			idx = len(" ".join((sender, opcode, recipient)))
 			msg = line[idx:]
 			if opcode.isdigit():
 				opcode = int(opcode)
-			return stripcolon(sender), opcode, recipient, stripcolon(msg)
+			return sender, opcode, recipient, stripcolon(msg)
 		
 		elif line.startswith("PING"):
 			server = ""
@@ -127,9 +132,10 @@ class IRCServer(QTcpSocket):
 		self.close()
 	
 	def write(self, data):
-		#print(">>> %r" % (data))
+		print(">>> %r" % (data))
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
+
 
 class IRCChannel(QObject):
 	"""
@@ -137,12 +143,14 @@ class IRCChannel(QObject):
 	This should not be created outside an IRCServer object.
 	"""
 	
+	receivedTopic = Signal(str) # Fired when the client receives the channel topic
 	userJoined = Signal(str) # Fired when an user joins the channel
 	
 	def __init__(self, name, parent):
 		super(IRCChannel, self).__init__(parent)
 		self.__name = name
 		self.__parent = parent # server
+		self.receivedTopic.connect(lambda topic: self.__topic = topic)
 	
 	def name(self):
 		return self.__name
@@ -150,8 +158,12 @@ class IRCChannel(QObject):
 	def parent(self):
 		return self.__parent
 	
+	def topic(self):
+		return self.__topic
+	
 	def write(self, msg):
 		self.parent().write("PRIVMSG %s :%s" % (self.name(), msg))
+
 
 class IRCUser(object):
 	def __init__(self, name, parent):
