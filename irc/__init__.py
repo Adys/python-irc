@@ -60,7 +60,7 @@ class IRCServer(QTcpSocket):
 			
 			if opcode == RPL_TOPIC:
 				channel, _, msg = msg.partition(" ")
-				self.channel(channel).receivedTopic.emit(msg)
+				self.channel(channel).receivedTopic.emit(stripcolon(msg))
 			
 			elif opcode == "JOIN":
 				nick, host = sender.split("!")
@@ -83,18 +83,17 @@ class IRCServer(QTcpSocket):
 				else:
 					recipient = IRCChannel(recipient, self)
 					self.receivedChannelMessage.emit(sender, msg, recipient)
-			
-			else:
-				print("<<< %r" % (line))
 	
 	def __parse(self, line):
 		if line.startswith(":"):
-			sender, opcode, recipient = line[1:].split(" ")[:3] # strip the first colon already
+			# XXX We need to use partition() and check arg numbers
+			line = line[1:] # strip the first colon already
+			sender, opcode, recipient = line.split(" ")[:3]
 			idx = len(" ".join((sender, opcode, recipient)))
 			msg = line[idx:]
 			if opcode.isdigit():
 				opcode = int(opcode)
-			return sender, opcode, recipient, stripcolon(msg)
+			return sender, opcode, recipient, stripcolon(msg.strip())
 		
 		elif line.startswith("PING"):
 			server = ""
@@ -158,7 +157,6 @@ class IRCServer(QTcpSocket):
 		Writes \a data to the server. The data is not modified, and must be properly
 		terminated with CRLF.
 		"""
-		print(">>> %r" % (data))
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
 
@@ -177,7 +175,7 @@ class IRCChannel(QObject):
 		self.__name = name
 		self.__parent = parent # server
 		self.__topic = ""
-		self.receivedTopic.connect(lambda topic: self.__topic = topic)
+		self.receivedTopic.connect(lambda topic: setattr(self, "__topic", topic))
 	
 	def name(self):
 		"""
