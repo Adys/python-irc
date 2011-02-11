@@ -23,6 +23,15 @@ class IRCChannel(QObject):
 		self.__topic = ""
 		self.receivedTopic.connect(lambda topic: setattr(self, "__topic", topic))
 	
+	def kick(self, user, reason=""):
+		"""
+		Kicks \a user from the channel, with optional \a reason.
+		"""
+		if reason:
+			self.parent().write("KICK %s :%s" % (user, reason))
+		else:
+			self.parent().write("KICK %s :%s")
+	
 	def name(self):
 		"""
 		Returns the channel name.
