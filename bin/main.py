@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Python IRC test client
 """
@@ -14,6 +15,9 @@ class IRCClient(QCoreApplication):
 		super(IRCClient, self).__init__(argv)
 		QTimer.singleShot(0, self.run)
 	
+	def watchChannel(self, channel):
+		channel.receivedTopic.connect(lambda topic: print("Topic for %s is: %s" % (channel.name(), topic)))
+	
 	def run(self):
 		self.irc = IRCServer("irc.freenode.net")
 		self.irc.connectAs("Addybot")
@@ -21,6 +25,8 @@ class IRCClient(QCoreApplication):
 		self.irc.receivedNotice.connect(lambda sender, msg: print("NOTICE (%s): %s" % (sender, msg)))
 		self.irc.receivedChannelMessage.connect(lambda sender, msg, channel: print("%s <%s> %s" % (channel, sender, msg)))
 		self.irc.receivedPrivateMessage.connect(lambda sender, msg: print("<<< %s >>>: %s" % (sender, msg)))
+		
+		self.irc.joinedChannel.connect(self.watchChannel)
 
 
 def main():
