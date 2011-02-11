@@ -31,6 +31,12 @@ class IRCClient(QCoreApplication):
 		# raw log
 		self.irc.packetWritten.connect(lambda data: print(">>> %r" % (data)))
 		self.irc.packetRead.connect(lambda data: print("<<< %r" % (data)))
+		
+		def autorejoin(sender, channel, reason):
+			print("Kicked from %s (%s), rejoining..." % (channel.name(), reason))
+			self.irc.join(channel.name())
+			del channel
+		self.irc.kicked.connect(autorejoin)
 
 
 def main():

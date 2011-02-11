@@ -14,6 +14,7 @@ class IRCChannel(QObject):
 	
 	receivedTopic = Signal(str) # Fired when the client receives the channel topic
 	userJoined = Signal(str) # Fired when an user joins the channel
+	userKicked = Signal(str, str, str) # Fired when an user is kicked from the channel
 	
 	def __init__(self, name, parent):
 		super(IRCChannel, self).__init__(parent)

@@ -26,6 +26,7 @@ class IRCServer(QTcpSocket):
 	"""
 	
 	joinedChannel = Signal(IRCChannel) # fired when the client joins a channel
+	kicked = Signal(str, IRCChannel, str) # fired when the client gets kicked from a channel
 	online = Signal() # fired when a connection to the IRC server has been successfully established.
 	packetRead = Signal(str) # fired when a full packet is read from the server
 	packetWritten = Signal(str) # fired when a full packet is written to the server
@@ -74,6 +75,21 @@ class IRCServer(QTcpSocket):
 					self.joinedChannel.emit(self.__channels[channel])
 				else:
 					self.channel(channel).userJoined.emit(nick)
+			
+			elif opcode == "KICK":
+				channel = self.channel(recipient)
+				user, _, reason = msg.partition(" ")
+				reason = stripcolon(reason)
+				
+				if user == self.nick():
+					# If we get kicked, emit IRCServer.kicked(sender, channel, reason)
+					# TODO also emit IRCChannel.kicked(sender, reason)
+					self.kicked.emit(sender, channel, reason)
+					del self.__channels[recipient] # remove from channel list
+				
+				else:
+					# Otherwise, emit IRCChannel.userKicked(sender, user, reason)
+					self.channel(channel).userKicked.emit(sender, user, reason)
 			
 			elif opcode == "NOTICE":
 				self.receivedNotice.emit(sender, msg)
@@ -149,7 +165,7 @@ class IRCServer(QTcpSocket):
 		\sa receivedPing()
 		"""
 		msg = str(msg) # XXX
-		self.write("PONG %s\r\n" % (msg))
+		self.write("PONG :%s\r\n" % (msg))
 	
 	def quit(self):
 		"""
