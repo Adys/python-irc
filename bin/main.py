@@ -17,13 +17,10 @@ class IRCClient(QCoreApplication):
 	def run(self):
 		self.irc = IRCServer("irc.freenode.net")
 		self.irc.connectAs("Addybot")
-		self.irc.online.connect(self.joinChannels)
+		self.irc.online.connect(lambda: self.irc.join("#addybot"))
 		self.irc.receivedNotice.connect(lambda sender, msg: print("NOTICE (%s): %s" % (sender, msg)))
 		self.irc.receivedChannelMessage.connect(lambda sender, msg, channel: print("%s <%s> %s" % (channel, sender, msg)))
 		self.irc.receivedPrivateMessage.connect(lambda sender, msg: print("<<< %s >>>: %s" % (sender, msg)))
-	
-	def joinChannels(self):
-		self.irc.join("#addybot")
 
 
 def main():
