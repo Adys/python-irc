@@ -1,6 +1,7 @@
 """
 Python IRC library
 """
+
 from PySide.QtCore import Signal, SIGNAL
 from PySide.QtNetwork import QTcpSocket
 
@@ -21,6 +22,7 @@ class IRCServer(QTcpSocket):
 	Connect with server.connectAs(nick), and connect to the online() signal.
 	"""
 	
+	joinedChannel = Signal(str) # fired when the client joins a channel
 	online = Signal() # fired when a connection to the IRC server has been successfully established.
 	receivedPing = Signal(str) # fired when the client receives a Ping packet
 	receivedChannelMessage = Signal(str, str, str) # fired when the client receives a channel privmsg packet
@@ -32,6 +34,7 @@ class IRCServer(QTcpSocket):
 		self.__host = host
 		self.__port = port
 		self.__linebuf = ""
+		self.__channels = {}
 		self.readyRead.connect(self.__handleRead)
 		self.receivedPing.connect(self.pong)
 	
@@ -54,16 +57,26 @@ class IRCServer(QTcpSocket):
 			if opcode == RPL_WELCOME:
 				self.online.emit()
 			
-			elif opcode == "PING":
-				self.receivedPing.emit(msg)
+			elif opcode == "JOIN":
+				nick, host = sender.split("!")
+				channel = stripcolon(recipient)
+				if nick == self.nick():
+					self.__channels[channel] = IRCChannel(channel, self)
+					self.joinedChannel.emit(self.__channels[channel])
+				else:
+					self.channel(channel).userJoined.emit(nick)
 			
 			elif opcode == "NOTICE":
 				self.receivedNotice.emit(sender, msg)
+			
+			elif opcode == "PING":
+				self.receivedPing.emit(msg)
 			
 			elif opcode == "PRIVMSG":
 				if recipient == self.nick():
 					self.receivedPrivateMessage.emit(sender, msg)
 				else:
+					recipient = IRCChannel(recipient, self)
 					self.receivedChannelMessage.emit(sender, msg, recipient)
 			
 			else:
@@ -85,6 +98,9 @@ class IRCServer(QTcpSocket):
 			return "", opcode, "", stripcolon(msg)
 		
 		return None, None, None, "(unknown msg)"
+	
+	def channel(self, name):
+		return self.__channels[name]
 	
 	def connectAs(self, nick, user="", host="", serverName="", realName=""):
 		self.connectToHost(self.__host, self.__port)
@@ -116,6 +132,13 @@ class IRCServer(QTcpSocket):
 		self.waitForBytesWritten()
 
 class IRCChannel(object):
+	"""
+	A channel on an IRC server
+	This should not be created outside an IRCServer object.
+	"""
+	
+	userJoined = Signal(str) # Fired when an user joins the channel
+	
 	def __init__(self, name, parent):
 		self.__name = name
 		self.__parent = parent # server
@@ -135,6 +158,12 @@ class IRCUser(object):
 		self.__parent = parent # server
 	
 	def name(self):
+		return self.__name
+	
+	def nick(self):
+		"""
+		Alias for name()
+		"""
 		return self.__name
 	
 	def parent(self):
