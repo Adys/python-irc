@@ -27,6 +27,10 @@ class IRCClient(QCoreApplication):
 		self.irc.receivedPrivateMessage.connect(lambda sender, msg: print("<<< %s >>>: %s" % (sender, msg)))
 		
 		self.irc.joinedChannel.connect(self.watchChannel)
+		
+		# raw log
+		self.irc.packetWritten.connect(lambda data: print(">>> %r" % (data)))
+		self.irc.packetRead.connect(lambda data: print("<<< %r" % (data)))
 
 
 def main():

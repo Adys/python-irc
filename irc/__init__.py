@@ -27,6 +27,8 @@ class IRCServer(QTcpSocket):
 	
 	joinedChannel = Signal(IRCChannel) # fired when the client joins a channel
 	online = Signal() # fired when a connection to the IRC server has been successfully established.
+	packetRead = Signal(str) # fired when a full packet is read from the server
+	packetWritten = Signal(str) # fired when a full packet is written to the server
 	receivedPing = Signal(str) # fired when the client receives a Ping packet
 	receivedChannelMessage = Signal(str, str, str) # fired when the client receives a channel privmsg packet
 	receivedNotice = Signal(str, str) # fired when the client receives a Notice packet
@@ -85,6 +87,8 @@ class IRCServer(QTcpSocket):
 				else:
 					recipient = IRCChannel(recipient, self)
 					self.receivedChannelMessage.emit(sender, msg, recipient)
+			
+			self.packetRead.emit(line)
 	
 	def __parse(self, line):
 		if line.startswith(":"):
@@ -158,9 +162,11 @@ class IRCServer(QTcpSocket):
 		"""
 		Writes \a data to the server. The data is not modified, and must be properly
 		terminated with CRLF.
+		\sa packetWritten()
 		"""
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
+		self.packetWritten.emit(data)
 
 
 class IRCUser(object):
