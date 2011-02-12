@@ -31,7 +31,6 @@ class IRCServer(QTcpSocket):
 	packetRead = Signal(str) # fired when a full packet is read from the server
 	packetWritten = Signal(str) # fired when a full packet is written to the server
 	receivedPing = Signal(str) # fired when the client receives a Ping packet
-	receivedChannelMessage = Signal(str, str, str) # fired when the client receives a channel privmsg packet
 	receivedNotice = Signal(str, str) # fired when the client receives a Notice packet
 	receivedPrivateMessage = Signal(str, str) # fired when the client receives a personal privmsg packet
 	
@@ -101,8 +100,7 @@ class IRCServer(QTcpSocket):
 				if recipient == self.nick():
 					self.receivedPrivateMessage.emit(sender, msg)
 				else:
-					recipient = IRCChannel(recipient, self)
-					self.receivedChannelMessage.emit(sender, msg, recipient)
+					self.channel(recipient).receivedMessage.emit(sender, msg)
 			
 			self.packetRead.emit(line)
 	
