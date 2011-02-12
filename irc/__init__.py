@@ -122,8 +122,6 @@ class IRCServer(QTcpSocket):
 			recipient = ""
 			opcode, msg = line.split()
 			return "", opcode, "", stripcolon(msg)
-		
-		return None, None, None, "(unknown msg)"
 	
 	def channel(self, channel):
 		"""
