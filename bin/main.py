@@ -22,7 +22,7 @@ class IRCClient(QCoreApplication):
 	def handleMessage(self, channel, sender, message):
 		message = message.lower()
 		if message.startswith(self.irc.nick().lower()):
-			channel.send("%s: Hey; you just said %r" % (sender, message))
+			channel.send("%s: Hey; you just said %r" % (sender.nick(), message))
 	
 	def run(self):
 		self.irc = IRCServer("irc.freenode.net")

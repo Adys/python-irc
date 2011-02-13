@@ -67,13 +67,13 @@ class IRCServer(QTcpSocket):
 				self.channel(channel).receivedTopic.emit(stripcolon(msg))
 			
 			elif opcode == "JOIN":
-				nick, host = sender.split("!")
+				user = IRCUser(sender, self)
 				channel = stripcolon(recipient)
-				if nick == self.nick():
+				if user.nick() == self.nick():
 					self.__channels[channel] = IRCChannel(channel, self)
 					self.joinedChannel.emit(self.__channels[channel])
 				else:
-					self.channel(channel).userJoined.emit(nick)
+					self.channel(channel).userJoined.emit(user)
 			
 			elif opcode == "KICK":
 				channel = self.channel(recipient)
@@ -97,6 +97,7 @@ class IRCServer(QTcpSocket):
 				self.receivedPing.emit(msg)
 			
 			elif opcode == "PRIVMSG":
+				sender = IRCUser(sender, self)
 				if recipient == self.nick():
 					self.receivedPrivateMessage.emit(sender, msg)
 				else:
@@ -191,21 +192,23 @@ class IRCServer(QTcpSocket):
 
 
 class IRCUser(object):
-	def __init__(self, name, parent):
-		self.__name = name
+	def __init__(self, nick, parent):
+		if "!" in nick:
+			nick, self.__host = nick.split("!")
+		self.__nick= nick
 		self.__parent = parent # server
 	
 	def name(self):
 		"""
 		Alias for nick()
 		"""
-		return self.__name
+		return self.__nick
 	
 	def nick(self):
 		"""
 		Returns the user's nickname.
 		"""
-		return self.__name
+		return self.__nick
 	
 	def parent(self):
 		"""
