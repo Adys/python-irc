@@ -169,11 +169,20 @@ class IRCServer(QTcpSocket):
 		self.write("QUIT\r\n")
 		self.close()
 	
+	def send(self, message):
+		"""
+		Sends \a message to the server, terminating it with CRLF if necessary.
+		\sa write()
+		"""
+		if not message.endswith("\r\n"):
+			message += "\r\n"
+		self.write(message)
+	
 	def write(self, data):
 		"""
 		Writes \a data to the server. The data is not modified, and must be properly
 		terminated with CRLF.
-		\sa packetWritten()
+		\sa send() packetWritten()
 		"""
 		data = str(data)
 		super(IRCServer, self).write(data)
