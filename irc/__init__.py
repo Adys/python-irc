@@ -160,7 +160,6 @@ class IRCServer(QTcpSocket):
 		Sends a PONG packet to the server with the message \a msg.
 		\sa receivedPing()
 		"""
-		msg = str(msg) # XXX
 		self.write("PONG :%s\r\n" % (msg))
 	
 	def quit(self):
@@ -176,6 +175,7 @@ class IRCServer(QTcpSocket):
 		terminated with CRLF.
 		\sa packetWritten()
 		"""
+		data = str(data)
 		super(IRCServer, self).write(data)
 		self.waitForBytesWritten()
 		self.packetWritten.emit(data)
