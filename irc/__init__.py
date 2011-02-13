@@ -138,8 +138,8 @@ class IRCServer(QTcpSocket):
 		self.__nick = nick
 		
 		def onConnect():
-			self.write("NICK %s\r\n" % (nick))
-			self.write("USER %s %s %s :%s\r\n" % (user or nick, host or nick, serverName or nick, realName or nick))
+			self.send("NICK %s" % (nick))
+			self.send("USER %s %s %s :%s" % (user or nick, host or nick, serverName or nick, realName or nick))
 		
 		self.connected.connect(onConnect)
 	
@@ -147,7 +147,7 @@ class IRCServer(QTcpSocket):
 		"""
 		Joins the channel \a channel.
 		"""
-		self.write("JOIN %s\r\n" % (channel))
+		self.send("JOIN %s" % (channel))
 	
 	def nick(self):
 		"""
@@ -160,13 +160,13 @@ class IRCServer(QTcpSocket):
 		Sends a PONG packet to the server with the message \a msg.
 		\sa receivedPing()
 		"""
-		self.write("PONG :%s\r\n" % (msg))
+		self.send("PONG :%s" % (msg))
 	
 	def quit(self):
 		"""
 		Quits the server and closes the TCP socket.
 		"""
-		self.write("QUIT\r\n")
+		self.send("QUIT")
 		self.close()
 	
 	def send(self, message):
@@ -217,4 +217,4 @@ class IRCUser(object):
 		"""
 		Sends a message to the user.
 		"""
-		self.parent().write("PRIVMSG %s :%s" % (self.name(), msg))
+		self.parent().send("PRIVMSG %s :%s" % (self.name(), msg))

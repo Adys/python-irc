@@ -29,9 +29,9 @@ class IRCChannel(QObject):
 		Kicks \a user from the channel, with optional \a reason.
 		"""
 		if reason:
-			self.parent().write("KICK %s %s :%s" % (self.name(), user, reason))
+			self.parent().send("KICK %s %s :%s" % (self.name(), user, reason))
 		else:
-			self.parent().write("KICK %s %s" % (self.name(), user))
+			self.parent().send("KICK %s %s" % (self.name(), user))
 	
 	def name(self):
 		"""
@@ -54,8 +54,8 @@ class IRCChannel(QObject):
 		"""
 		return self.__topic
 	
-	def write(self, msg):
+	def send(self, message):
 		"""
-		Sends a message to the channel.
+		Sends \a message to the channel.
 		"""
-		self.parent().write("PRIVMSG %s :%s" % (self.name(), msg))
+		self.parent().send("PRIVMSG %s :%s" % (self.name(), msg))
