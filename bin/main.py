@@ -17,7 +17,12 @@ class IRCClient(QCoreApplication):
 	
 	def watchChannel(self, channel):
 		channel.receivedTopic.connect(lambda topic: print("Topic for %s is: %s" % (channel.name(), topic)))
-		channel.receivedMessage.connect(lambda sender, msg: print("%s | <%s> %s" % (channel.name(), sender, msg)))
+		channel.receivedMessage.connect(lambda sender, message: self.handleMessage(channel, sender, message))
+	
+	def handleMessage(self, channel, sender, message):
+		message = message.lower()
+		if message.startswith(self.irc.nick().lower()):
+			channel.write("%s: Hey; you just said %r" % (sender, message))
 	
 	def run(self):
 		self.irc = IRCServer("irc.freenode.net")
