@@ -213,8 +213,8 @@ class IRCUser(object):
 		"""
 		return self.__parent
 	
-	def write(self, msg):
+	def write(self, message):
 		"""
-		Sends a message to the user.
+		Sends \a message to the user.
 		"""
-		self.parent().send("PRIVMSG %s :%s" % (self.name(), msg))
+		self.parent().send("PRIVMSG %s :%s" % (self.name(), message))

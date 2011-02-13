@@ -58,4 +58,4 @@ class IRCChannel(QObject):
 		"""
 		Sends \a message to the channel.
 		"""
-		self.parent().send("PRIVMSG %s :%s" % (self.name(), msg))
+		self.parent().send("PRIVMSG %s :%s" % (self.name(), message))
