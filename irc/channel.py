@@ -4,6 +4,7 @@ Channel logic
 """
 
 from PySide.QtCore import QObject, Signal
+from .user import IRCUser
 
 
 class IRCChannel(QObject):
@@ -12,9 +13,9 @@ class IRCChannel(QObject):
 	This should not be created outside an IRCServer object.
 	"""
 	
-	receivedMessage = Signal(str, str) # Fired when the client receives a channel privmsg packet
+	receivedMessage = Signal(IRCUser, str) # Fired when the client receives a channel privmsg packet
 	receivedTopic = Signal(str) # Fired when the client receives the channel topic
-	userJoined = Signal(str) # Fired when an user joins the channel
+	userJoined = Signal(IRCUser) # Fired when an user joins the channel
 	userKicked = Signal(str, str, str) # Fired when an user is kicked from the channel
 	
 	def __init__(self, name, parent):

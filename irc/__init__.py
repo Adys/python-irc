@@ -6,6 +6,7 @@ Python IRC library
 from PySide.QtCore import Signal, SIGNAL
 from PySide.QtNetwork import QTcpSocket
 from .channel import IRCChannel
+from .user import IRCUser
 
 
 def stripcolon(s):
