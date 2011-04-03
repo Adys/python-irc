@@ -141,7 +141,10 @@ class IRCServer(QObject):
 		set to \a nick. \a user, \a host, \a serverName and \a realName al default
 		to the user's nickname.
 		"""
-		self.socket.connectToHost(self.__host, self.__port)
+		if self.isSsl():
+			self.socket.connectToHostEncrypted(self.__host, self.__port)
+		else:
+			self.socket.connectToHost(self.__host, self.__port)
 		self.__nick = nick
 		
 		def onConnect():
@@ -149,6 +152,9 @@ class IRCServer(QObject):
 			self.send("USER %s %s %s :%s" % (user or nick, host or nick, serverName or nick, realName or nick))
 		
 		self.socket.connected.connect(onConnect)
+	
+	def isSsl(self):
+		return isinstance(self.socket, QSslSocket)
 	
 	def join(self, channel):
 		"""
