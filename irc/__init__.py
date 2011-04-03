@@ -3,8 +3,8 @@
 Python IRC library
 """
 
-from PySide.QtCore import Signal, SIGNAL
-from PySide.QtNetwork import QTcpSocket
+from PySide.QtCore import Signal, SIGNAL, QObject
+from PySide.QtNetwork import QTcpSocket, QSslSocket
 from .channel import IRCChannel
 from .user import IRCUser
 
@@ -19,7 +19,7 @@ def stripcolon(s):
 RPL_WELCOME = 001
 RPL_TOPIC   = 332
 
-class IRCServer(QTcpSocket):
+class IRCServer(QObject):
 	"""
 	A socket to an IRC server.
 	Initialize it with the host and port (default 6667)
@@ -35,18 +35,23 @@ class IRCServer(QTcpSocket):
 	receivedNotice = Signal(str, str) # fired when the client receives a Notice packet
 	receivedPrivateMessage = Signal(str, str) # fired when the client receives a personal privmsg packet
 	
-	def __init__(self, host, port=6667):
+	def __init__(self, host, port=6667, ssl=False):
 		super(IRCServer, self).__init__()
+		if ssl:
+			self.socket = QSslSocket()
+		else:
+			self.socket = QTcpSocket()
+		
 		self.__host = host
 		self.__port = port
 		self.__linebuf = ""
 		self.__channels = {}
-		self.readyRead.connect(self.__handleRead)
+		self.socket.readyRead.connect(self.__handleRead)
 		self.receivedPing.connect(self.pong)
 	
 	def __handleRead(self):
 		while True:
-			line = str(self.readLine())
+			line = str(self.socket.readLine())
 			if not line:
 				break
 			
@@ -58,7 +63,7 @@ class IRCServer(QTcpSocket):
 				self.__linebuf = line
 				continue
 			
-			sender, opcode, recipient, msg = self.__parse(line.strip())
+			sender, opcode, recipient, msg = self._parse(line.strip())
 			
 			if opcode == RPL_WELCOME:
 				self.online.emit()
@@ -106,7 +111,7 @@ class IRCServer(QTcpSocket):
 			
 			self.packetRead.emit(line)
 	
-	def __parse(self, line):
+	def _parse(self, line):
 		if line.startswith(":"):
 			# XXX We need to use partition() and check arg numbers
 			line = line[1:] # strip the first colon already
@@ -136,14 +141,14 @@ class IRCServer(QTcpSocket):
 		set to \a nick. \a user, \a host, \a serverName and \a realName al default
 		to the user's nickname.
 		"""
-		self.connectToHost(self.__host, self.__port)
+		self.socket.connectToHost(self.__host, self.__port)
 		self.__nick = nick
 		
 		def onConnect():
 			self.send("NICK %s" % (nick))
 			self.send("USER %s %s %s :%s" % (user or nick, host or nick, serverName or nick, realName or nick))
 		
-		self.connected.connect(onConnect)
+		self.socket.connected.connect(onConnect)
 	
 	def join(self, channel):
 		"""
@@ -190,6 +195,6 @@ class IRCServer(QTcpSocket):
 		\sa send() packetWritten()
 		"""
 		data = str(data)
-		super(IRCServer, self).write(data)
-		self.waitForBytesWritten()
+		self.socket.write(data)
+		self.socket.waitForBytesWritten()
 		self.packetWritten.emit(data)
