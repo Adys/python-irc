@@ -164,11 +164,14 @@ class IRCServer(QTcpSocket):
 		"""
 		self.send("PONG :%s" % (msg))
 	
-	def quit(self):
+	def quit(self, reason=""):
 		"""
 		Quits the server and closes the TCP socket.
 		"""
-		self.send("QUIT")
+		if reason:
+			self.send("QUIT :%s" % (reason))
+		else:
+			self.send("QUIT")
 		self.close()
 	
 	def send(self, message):
