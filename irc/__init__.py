@@ -5,6 +5,7 @@ Python IRC library
 
 from PySide.QtCore import Signal, SIGNAL, QObject
 from PySide.QtNetwork import QTcpSocket, QSslSocket
+from . import opcodes
 from .channel import IRCChannel
 from .user import IRCUser
 
@@ -13,11 +14,6 @@ def stripcolon(s):
 	if s.startswith(":"):
 		return s[1:]
 	return s
-
-
-# OpCodes
-RPL_WELCOME = 001
-RPL_TOPIC   = 332
 
 class IRCServer(QObject):
 	"""
@@ -65,10 +61,10 @@ class IRCServer(QObject):
 			
 			sender, opcode, recipient, msg = self._parse(line.strip())
 			
-			if opcode == RPL_WELCOME:
+			if opcode == opcodes.RPL_WELCOME:
 				self.online.emit()
 			
-			if opcode == RPL_TOPIC:
+			if opcode == opcodes.RPL_TOPIC:
 				channel, _, msg = msg.partition(" ")
 				self.channel(channel).receivedTopic.emit(stripcolon(msg))
 			
