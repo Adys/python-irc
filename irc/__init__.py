@@ -64,9 +64,20 @@ class IRCServer(QObject):
 			if opcode == opcodes.RPL_WELCOME:
 				self.online.emit()
 			
-			if opcode == opcodes.RPL_TOPIC:
-				channel, _, msg = msg.partition(" ")
-				self.channel(channel).receivedTopic.emit(stripcolon(msg))
+			elif opcode == opcodes.RPL_TOPIC:
+				channel, _, topic = msg.partition(" ")
+				topic = stripcolon(topic)
+				channel = self.channel(channel)
+				channel.topicUpdated.emit(None, topic)
+				channel.receivedReply.emit(opcode, stripcolon(topic))
+			
+			elif opcode == opcodes.RPL_CREATIONTIME:
+				channel, timestamp = msg.split(" ")
+				self.channel(channel).receivedReply.emit(opcode, timestamp)
+			
+			elif opcode == opcodes.RPL_CHANNELMODEIS:
+				channel, mode = msg.partition(" ")
+				self.channel(channel).receivedReply.emit(opcode, mode)
 			
 			elif opcode == "JOIN":
 				user = IRCUser(sender, self)
@@ -104,6 +115,10 @@ class IRCServer(QObject):
 					self.receivedPrivateMessage.emit(sender, msg)
 				else:
 					self.channel(recipient).receivedMessage.emit(sender, msg)
+			
+			elif opcode == "TOPIC":
+				sender = IRCUser(sender, self)
+				IRCChannel(recipient).topicUpdated.emit(sender, msg)
 			
 			self.packetRead.emit(line)
 	
