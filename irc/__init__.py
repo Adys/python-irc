@@ -205,6 +205,18 @@ class IRCServer(QObject):
 			message += "\r\n"
 		self.write(message)
 	
+	def setAway(self, away, reason="Away"):
+		"""
+		Sets the user's away status to \a away, with reason \a reason.
+		\a reason is ignored if \a away is False. Default reason is "Away".
+		Note that you cannot set yourself away without a reason.
+		\sa away()
+		"""
+		if not away:
+			self.send("AWAY")
+		else:
+			self.send("AWAY :%s" % (reason))
+	
 	def write(self, data):
 		"""
 		Writes \a data to the server. The data is not modified, and must be properly
