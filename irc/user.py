@@ -11,6 +11,11 @@ class IRCUser(object):
 		self.__nick= nick
 		self.__parent = parent # server
 	
+	def __eq__(self, other):
+		if isinstance(other, basestring):
+			return self.nick() == other
+		return super(IRCUser, self).__eq__(other)
+	
 	def name(self):
 		"""
 		Alias for nick()
